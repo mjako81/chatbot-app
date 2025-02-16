@@ -1,9 +1,37 @@
 "use client"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 export default function Chat() {
+  const ref = useRef();
   const [message, setMessage] = useState<string>("");
   const [response, setResponse] = useState<string>("");
+  const [file, setFile] = useState<any>({});
+  const [fileUploadMsg, setFileUploadMsg] = useState<string>("");
+  const [fileSelected, setFileSelected] = useState<string>("");
+
+  const upload = () => {
+    const url = 'http://localhost:8080/upload';
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch(url, {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(result => {
+        setFileUploadMsg("Document uploaded successfully");
+        setFileSelected("N");
+        setTimeout(() => {
+          setFileUploadMsg("");
+        }, 4000)
+        ref.current.value = "";
+      })
+      .catch(error => {
+        setFileUploadMsg("Error uploading the document");
+        setFileSelected("N");
+      });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,6 +48,11 @@ export default function Chat() {
     setMessage(e.target.value);
   }
 
+  const selectFile = (e: any) => {
+    setFile(e.target.files[0]);
+    setFileSelected("Y");
+  }
+
 
   return (
       <main className="flex h-screen flex-col items-center justify-center">
@@ -29,6 +62,25 @@ export default function Chat() {
               A simple RAG application using LangChain4J in the backend
             </div>
           </div>
+        <label className="w-3/4">Upload file for RAG query:</label>
+        <div className="flex items-left justify-start">
+
+          <div className="w-1/2 flex flex-col">
+            <label className="block">
+              <span className="sr-only">Choose file</span>
+              <input type="file" ref={ref} onChange={selectFile} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-black-700 hover:file:bg-violet-100"></input>
+            </label>
+          </div>
+          {(fileSelected === "Y") && <button onClick={upload} className="bg-violet-50 hover:bg-violet-100 text-sm text-black-700 font-bold py-2 px-4 rounded-full">
+            Upload
+          </button>}
+          {
+            <div className='flex justify-between'>
+            {fileUploadMsg}
+          </div>
+          }
+
+        </div>
           <div className='flex-1 relative overflow-y-auto my-4 md:my-6'>
                     <textarea readOnly value={response} rows={50} cols={500}>
                     </textarea>
